@@ -1,0 +1,3 @@
+!pip install numpy==1.23
+!pip install pillow==9.5
+!apt install -y protobuf-compiler

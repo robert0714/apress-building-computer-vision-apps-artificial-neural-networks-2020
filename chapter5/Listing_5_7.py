@@ -3,7 +3,8 @@ import pathlib
 import cv2
 import tensorflow as tf
 import matplotlib.pyplot as plt
-
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 # Section1: Loading images from directories for training and test
 trainig_img_dir ="images/chest_xray/train"
