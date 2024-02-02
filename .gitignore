@@ -182,3 +182,4 @@ cython_debug/
 .vagrant
 images/
 logs
+chapter6/models

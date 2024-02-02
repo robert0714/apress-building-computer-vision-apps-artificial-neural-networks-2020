@@ -16,6 +16,16 @@ Select GPU as the hardware accelerator. Make sure you have Python 3 selected for
 * Tensoflow 2.13.1
 * https://github.com/googlecolab/colabtools/issues/4227
 
+## Downloading a Pretrained Model for Transfer Learning
+Instead of training a model from scratch, transfer learning allows us to transfer the knowledge learned by the pretrained model to the new problem domain.
+
+Transfer learning in object detection using TensorFlow involves leveraging pretrained models, such as those available in the TensorFlow Model Zoo, to accelerate and improve the training process for object detection tasks. TensorFlow provides several pretrained object detection models, such as the Single Shot MultiBox Detector (SSD) and Faster R-CNN, which are trained on large-scale datasets like Common Objects in Context (COCO) or Open Images.
+
+A collection of SSD-based models pretrained on the COCO 2017 dataset is available at https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md. 
+
+To demonstrate our training approach, we’ll utilize transfer learning from the SSD ResNet50 V1 FPN 640x640 (RetinaNet50) model from the following URL:
+http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+
 ## Configuring the Object Detection Pipeline
 The training pipeline is a configuration file that specifies various settings and hyperparameters for training an object detection model. It contains information about the model architecture, dataset paths, batch size, learning rate, data augmentation, evaluation settings, and more. It is usually written in the Protocol Buffers format (.config file).
 
@@ -277,3 +287,74 @@ It is important to note that ``pipeline.config`` has the parameter ``override_ba
 After editing the ``pipeline.config`` file, we need to upload it to Colab. We can upload it to any directory location, but in this case, we are uploading it to its original location from where we downloaded it. We will first remove the old ``pipeline.config`` file and then upload the updated one.
 
 To delete the old ``pipeline.config`` file from the Colab directory location, right-click it and then click Delete. To upload the updated ``pipeline.config`` file from your local computer, right-click the Colab directory (ssd_resnet50_v1_fpn_640x640_coco17_tpu-8), click Upload, and browse and upload the edited version of the ``pipeline.config`` file from the local computer.
+
+## Detecting Objects Using Trained Models
+The following are the general steps for crafting the object detection program, covered in depth in the next two sections:
+* Download and install the TensorFlow models project from the GitHub repository.
+* Write the Python code that will utilize the exported TensorFlow graph (exported model) to predict objects within new images that were not included in the training or test sets.
+
+### Installing TensorFlow’s models 
+* Install the libraries that are needed to build and install the models project. 
+```
+pip install --user Cython
+pip install --user contextlib2
+pip install --user pillow
+pip install --user lxml
+```
+* Install Google’s Protobuf compiler
+```bash
+sudo apt install protobuf-compiler
+```
+* Clone the TensorFlow models project from GitHub:
+```bash
+git clone --depth 1 https://github.com/tensorflow/models.git
+```
+* Compile the models project using the Protobuf compiler. Run the following set of commands from the models/research directory:
+```bash
+$ cd models/research
+$ protoc object_detection/protos/*.proto --python_out=.
+```
+
+* If you installed Protobuf manually and unzipped it in a directory, provide the full path up to bin/protoc in the previous command.
+
+* Set the following environment variables. It’s a standard practice to set these environment variables in ~/.bash_profile. Here are the instructions to do that:
+  * Open your command prompt or terminal and type vi ~/.bash_profile. You can use any other editor, such as nano, to edit the .bash_profile file.
+Add the following three lines at the end of .bash_profile. Make sure the paths match with the directory paths you have in your computer.
+    ```bash
+    export PYTHONPATH=$PYTHONPATH:/vagrant/chapter6/models/research/object_detection
+    export PYTHONPATH=$PYTHONPATH:/vagrant/chapter6/models/research
+    export PYTHONPATH=$PYTHONPATH:/vagrant/chapter6/models/research/slim
+    ```
+  * Save the file ~/.bash_profile after adding the previous line.
+  * Close your terminal and relaunch it to effect the change. 
+     You will need to close your PyCharm IDE to have the environment variables update in your IDE.
+     To test the setting, type the command echo $PYTHONPATH in your PyCharm terminal window. 
+     It should print the paths you just set up.
+* Build and install the research project that we just built using Protobuf. Execute the following commands from the models/research directory:
+    ```bash
+    cd /vagrant/chapter6/models/research/
+    cp /vagrant/chapter6/models/research/object_detection/packages/tf2/setup.py .
+    python setup.py build
+    python setup.py install
+    ```
+    or new command
+    ```bash
+    cd /vagrant/chapter6/models/research/
+    cp /vagrant/chapter6/models/research/object_detection/packages/tf2/setup.py .
+    pip wheel --no-deps -w dist .
+    pip install object-detection
+    ```
+    or another new command
+    ```bash
+    cd /vagrant/chapter6/models/research/
+    cp /vagrant/chapter6/models/research/object_detection/packages/tf2/setup.py .
+    python -m pip install .
+    ```
+    If these commands successfully run, you should output something like this:
+    ```bash
+    Finished processing dependencies for object-detection==0.1
+    ```
+* Our environment is now prepared to begin coding for image object detection. The model we’ll be working with is the one we exported and downloaded from Colab. If you haven’t completed this step yet, download the final model either from Google Colab or from Google Drive, assuming you stored your models there.
+
+## Configuration and Initialization
+In this section of the code, we initialize the model path, image input, and output directories. **Listing_6-15.py** shows the first part of the code that includes the library imports and path setup.

@@ -38,7 +38,9 @@ Vagrant.configure("2") do |config|
     vb.name = "python"
     vb.memory = "4096"
     vb.cpus = "2"
-  end
+  end 
+  config.vm.provision 'shell', inline: "sudo sed -i 's/us.archive.ubuntu.com/free.nchc.org.tw/g' /etc/apt/sources.list"
+  config.vm.provision 'shell', inline: 'sudo apt update -y'
   config.vm.provision 'shell', inline: 'sudo apt install python3 python3-pip python3-dev curl wget jq unzip -y'
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.scope = :box
